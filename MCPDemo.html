@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Server & Client in RAG System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .terminal {
+            font-family: 'Courier New', monospace;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .terminal-header {
+            background-color: #333;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+        }
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .terminal-content {
+            padding: 12px;
+            height: 200px;
+            overflow-y: auto;
+        }
+        .terminal-line {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        .terminal-prompt {
+            color: #4CAF50;
+        }
+        .terminal-command {
+            color: #569CD6;
+        }
+        .terminal-response {
+            color: #D4D4D4;
+        }
+        .terminal-error {
+            color: #F44747;
+        }
+        .terminal-success {
+            color: #4EC9B0;
+        }
+        .message {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .component-card {
+            transition: all 0.3s ease;
+        }
+        .component-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.8; }
+            50% { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">MCP Server & Client in RAG System</h1>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">
+                Interactive demonstration of Model-Client-Proxy architecture in a Retrieval-Augmented Generation system
+            </p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            <!-- Client Component -->
+            <div class="component-card bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-blue-600 p-4 text-white">
+                    <div class="flex items-center">
+                        <div class="bg-blue-400 rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                            <i class="fas fa-laptop-code text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-semibold">Client</h2>
+                            <p class="text-blue-100 text-sm">User Interface</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-medium mb-2" for="userQuery">Enter your query:</label>
+                        <div class="flex">
+                            <input type="text" id="userQuery" class="flex-grow px-3 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ask about RAG systems...">
+                            <button onclick="sendQuery()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-dot bg-red-500"></div>
+                            <div class="terminal-dot bg-yellow-500"></div>
+                            <div class="terminal-dot bg-green-500"></div>
+                            <span class="text-xs ml-2 text-gray-300">client.log</span>
+                        </div>
+                        <div class="terminal-content" id="clientTerminal">
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">$></span> Client initialized
+                            </div>
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">$></span> Ready to send queries to MCP Server
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MCP Server Component -->
+            <div class="component-card bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-purple-600 p-4 text-white">
+                    <div class="flex items-center">
+                        <div class="bg-purple-400 rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                            <i class="fas fa-server text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-semibold">MCP Server</h2>
+                            <p class="text-purple-100 text-sm">Model-Client-Proxy</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <span class="text-sm font-medium text-gray-700">Status:</span>
+                            <span id="serverStatus" class="ml-2 px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800">Online</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="toggleServer()" id="toggleServerBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-3 py-1 rounded text-sm">
+                                <i class="fas fa-power-off mr-1"></i> Stop
+                            </button>
+                        </div>
+                    </div>
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-dot bg-red-500"></div>
+                            <div class="terminal-dot bg-yellow-500"></div>
+                            <div class="terminal-dot bg-green-500"></div>
+                            <span class="text-xs ml-2 text-gray-300">server.log</span>
+                        </div>
+                        <div class="terminal-content" id="serverTerminal">
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">$></span> MCP Server started
+                            </div>
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">$></span> Listening on port 8080
+                            </div>
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">$></span> Ready to process requests
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Knowledge Base Component -->
+            <div class="component-card bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-green-600 p-4 text-white">
+                    <div class="flex items-center">
+                        <div class="bg-green-400 rounded-full w-10 h-10 flex items-center justify-center mr-3">
+                            <i class="fas fa-database text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-semibold">Knowledge Base</h2>
+                            <p class="text-green-100 text-sm">Vector Database</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="flex items-center mb-4">
+                        <div class="flex-1">
+                            <span class="text-sm font-medium text-gray-700">Documents:</span>
+                            <span class="ml-2 px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">1,024</span>
+                        </div>
+                        <div class="pulse text-green-500">
+                            <i class="fas fa-circle"></i>
+                        </div>
+                    </div>
+                    <div class="terminal">
+                        <div class="terminal-header">
+                            <div class="terminal-dot bg-red-500"></div>
+                            <div class="terminal-dot bg-yellow-500"></div>
+                            <div class="terminal-dot bg-green-500"></div>
+                            <span class="text-xs ml-2 text-gray-300">vector-db.log</span>
+                        </div>
+                        <div class="terminal-content" id="kbTerminal">
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">$></span> Vector database initialized
+                            </div>
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">$></span> Index built with 1024 documents
+                            </div>
+                            <div class="terminal-line">
+                                <span class="terminal-prompt">$></span> Ready for similarity search
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RAG Process Visualization -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-12">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">RAG Process Flow</h2>
+            
+            <div class="relative">
+                <!-- Process Steps -->
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8">
+                    <div class="flex flex-col items-center mb-6 md:mb-0 w-32">
+                        <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-2">
+                            <i class="fas fa-question text-blue-600 text-2xl"></i>
+                        </div>
+                        <p class="text-center text-sm font-medium">User Query</p>
+                    </div>
+                    
+                    <div class="hidden md:block">
+                        <i class="fas fa-arrow-right text-gray-400 text-xl"></i>
+                    </div>
+                    <div class="md:hidden">
+                        <i class="fas fa-arrow-down text-gray-400 text-xl"></i>
+                    </div>
+                    
+                    <div class="flex flex-col items-center mb-6 md:mb-0 w-32">
+                        <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mb-2">
+                            <i class="fas fa-exchange-alt text-purple-600 text-2xl"></i>
+                        </div>
+                        <p class="text-center text-sm font-medium">MCP Server</p>
+                    </div>
+                    
+                    <div class="hidden md:block">
+                        <i class="fas fa-arrow-right text-gray-400 text-xl"></i>
+                    </div>
+                    <div class="md:hidden">
+                        <i class="fas fa-arrow-down text-gray-400 text-xl"></i>
+                    </div>
+                    
+                    <div class="flex flex-col items-center mb-6 md:mb-0 w-32">
+                        <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mb-2">
+                            <i class="fas fa-search text-green-600 text-2xl"></i>
+                        </div>
+                        <p class="text-center text-sm font-medium">Retrieval</p>
+                    </div>
+                    
+                    <div class="hidden md:block">
+                        <i class="fas fa-arrow-right text-gray-400 text-xl"></i>
+                    </div>
+                    <div class="md:hidden">
+                        <i class="fas fa-arrow-down text-gray-400 text-xl"></i>
+                    </div>
+                    
+                    <div class="flex flex-col items-center mb-6 md:mb-0 w-32">
+                        <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mb-2">
+                            <i class="fas fa-brain text-yellow-600 text-2xl"></i>
+                        </div>
+                        <p class="text-center text-sm font-medium">Generation</p>
+                    </div>
+                    
+                    <div class="hidden md:block">
+                        <i class="fas fa-arrow-right text-gray-400 text-xl"></i>
+                    </div>
+                    <div class="md:hidden">
+                        <i class="fas fa-arrow-down text-gray-400 text-xl"></i>
+                    </div>
+                    
+                    <div class="flex flex-col items-center w-32">
+                        <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-2">
+                            <i class="fas fa-comment-dots text-blue-600 text-2xl"></i>
+                        </div>
+                        <p class="text-center text-sm font-medium">Response</p>
+                    </div>
+                </div>
+                
+                <!-- Process Visualization -->
+                <div class="bg-gray-100 rounded-lg p-6">
+                    <div id="processVisualization" class="min-h-40 flex items-center justify-center">
+                        <p class="text-gray-500 italic">Send a query to see the RAG process in action...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Implementation -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">MCP Server Implementation</h2>
+            <div class="bg-gray-800 rounded-lg overflow-hidden mb-6">
+                <div class="flex items-center bg-gray-900 px-4 py-2">
+                    <div class="flex space-x-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <span class="text-gray-400 ml-4 text-sm">mcp_server.py</span>
+                </div>
+                <pre class="p-4 text-gray-100 overflow-x-auto"><code>from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import List
+import numpy as np
+from sentence_transformers import SentenceTransformer
+from transformers import pipeline
+
+app = FastAPI()
+
+# Load models
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+generation_model = pipeline("text-generation", model="gpt2")
+
+# Mock vector database
+class VectorDB:
+    def __init__(self):
+        self.documents = [
+            "RAG systems combine retrieval with generation.",
+            "MCP stands for Model-Client-Proxy architecture.",
+            "Vector databases store embeddings for similarity search."
+        ]
+        self.embeddings = embedding_model.encode(self.documents)
+    
+    def search(self, query_embedding, top_k=2):
+        similarities = np.dot(self.embeddings, query_embedding)
+        top_indices = np.argsort(similarities)[-top_k:][::-1]
+        return [self.documents[i] for i in top_indices]
+
+vector_db = VectorDB()
+
+class QueryRequest(BaseModel):
+    text: str
+
+@app.post("/process")
+async def process_query(request: QueryRequest):
+    # Step 1: Embed the query
+    query_embedding = embedding_model.encode(request.text)
+    
+    # Step 2: Retrieve relevant documents
+    retrieved_docs = vector_db.search(query_embedding)
+    
+    # Step 3: Generate response using retrieved context
+    context = " ".join(retrieved_docs)
+    prompt = f"Context: {context}\nQuestion: {request.text}\nAnswer:"
+    generated = generation_model(prompt, max_length=100, do_sample=True)
+    
+    return {
+        "query": request.text,
+        "retrieved_documents": retrieved_docs,
+        "response": generated[0]['generated_text']
+    }</code></pre>
+            </div>
+
+            <div class="bg-gray-800 rounded-lg overflow-hidden">
+                <div class="flex items-center bg-gray-900 px-4 py-2">
+                    <div class="flex space-x-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <span class="text-gray-400 ml-4 text-sm">client.py</span>
+                </div>
+                <pre class="p-4 text-gray-100 overflow-x-auto"><code>import requests
+import json
+
+class RAGClient:
+    def __init__(self, server_url="http://localhost:8080"):
+        self.server_url = server_url
+    
+    def query(self, text):
+        try:
+            response = requests.post(
+                f"{self.server_url}/process",
+                json={"text": text},
+                headers={"Content-Type": "application/json"}
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {"error": str(e)}
+
+# Example usage
+if __name__ == "__main__":
+    client = RAGClient()
+    result = client.query("What is RAG?")
+    print(json.dumps(result, indent=2))</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Server state
+        let serverOnline = true;
+        const sampleDocuments = [
+            "RAG (Retrieval-Augmented Generation) combines information retrieval with text generation.",
+            "The MCP (Model-Client-Proxy) architecture separates model serving from client interfaces.",
+            "Vector databases enable efficient similarity search for RAG systems.",
+            "Embedding models convert text to numerical vectors for retrieval.",
+            "RAG systems typically retrieve relevant documents before generating responses.",
+            "The proxy in MCP handles load balancing and request routing.",
+            "Sentence transformers are commonly used for embedding in RAG systems."
+        ];
+
+        // DOM elements
+        const clientTerminal = document.getElementById('clientTerminal');
+        const serverTerminal = document.getElementById('serverTerminal');
+        const kbTerminal = document.getElementById('kbTerminal');
+        const processVisualization = document.getElementById('processVisualization');
+        const serverStatus = document.getElementById('serverStatus');
+        const toggleServerBtn = document.getElementById('toggleServerBtn');
+        const userQuery = document.getElementById('userQuery');
+
+        // Add a message to terminal
+        function addTerminalMessage(terminal, message, type = 'response') {
+            const line = document.createElement('div');
+            line.className = 'terminal-line message';
+            
+            if (type === 'command') {
+                line.innerHTML = `<span class="terminal-prompt">$></span> <span class="terminal-command">${message}</span>`;
+            } else if (type === 'error') {
+                line.innerHTML = `<span class="terminal-prompt">$></span> <span class="terminal-error">${message}</span>`;
+            } else if (type === 'success') {
+                line.innerHTML = `<span class="terminal-prompt">$></span> <span class="terminal-success">${message}</span>`;
+            } else {
+                line.innerHTML = `<span class="terminal-prompt">$></span> <span class="terminal-response">${message}</span>`;
+            }
+            
+            terminal.appendChild(line);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // Toggle server state
+        function toggleServer() {
+            serverOnline = !serverOnline;
+            
+            if (serverOnline) {
+                serverStatus.textContent = 'Online';
+                serverStatus.className = 'ml-2 px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800';
+                toggleServerBtn.innerHTML = '<i class="fas fa-power-off mr-1"></i> Stop';
+                addTerminalMessage(serverTerminal, 'MCP Server restarted', 'success');
+                addTerminalMessage(clientTerminal, 'Server connection re-established', 'success');
+            } else {
+                serverStatus.textContent = 'Offline';
+                serverStatus.className = 'ml-2 px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800';
+                toggleServerBtn.innerHTML = '<i class="fas fa-power-off mr-1"></i> Start';
+                addTerminalMessage(serverTerminal, 'MCP Server stopped', 'error');
+                addTerminalMessage(clientTerminal, 'Server connection lost', 'error');
+            }
+        }
+
+        // Simulate vector DB search
+        function vectorDBSearch(query) {
+            // Mock search - just return 2 random documents
+            const shuffled = [...sampleDocuments].sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, 2);
+        }
+
+        // Simulate text generation
+        function generateText(query, context) {
+            // Mock generation
+            const responses = {
+                "what is rag": "RAG (Retrieval-Augmented Generation) is a system that combines information retrieval with text generation to produce more informed responses.",
+                "what is mcp": "MCP (Model-Client-Proxy) is an architecture that separates model serving from client interfaces using a proxy layer for better scalability.",
+                "how does rag work": "RAG works by first retrieving relevant documents from a knowledge base, then using those documents as context for generating a response.",
+                "what is a vector database": "A vector database stores embeddings (numerical representations) of documents and enables efficient similarity search for retrieval tasks."
+            };
+            
+            const lowerQuery = query.toLowerCase();
+            for (const [key, value] of Object.entries(responses)) {
+                if (lowerQuery.includes(key)) {
+                    return value;
+                }
+            }
+            
+            // Default response if no match found
+            return `Based on the context about ${context.split(' ')[0]}..., the answer to "${query}" would involve these concepts.`;
+        }
+
+        // Send query to MCP server
+        function sendQuery() {
+            const query = userQuery.value.trim();
+            if (!query) return;
+            
+            // Clear previous visualization
+            processVisualization.innerHTML = '';
+            
+            // Add to client terminal
+            addTerminalMessage(clientTerminal, `Sending query: "${query}"`, 'command');
+            
+            // Check server status
+            if (!serverOnline) {
+                addTerminalMessage(clientTerminal, 'Error: MCP Server is offline', 'error');
+                visualizeStep('error', 'Server offline');
+                return;
+            }
+            
+            // Simulate network delay
+            setTimeout(() => {
+                // Add to server terminal
+                addTerminalMessage(serverTerminal, `Received query: "${query}"`, 'command');
+                visualizeStep('query', `User query: "${query}"`);
+                
+                // Simulate processing delay
+                setTimeout(() => {
+                    // Simulate retrieval
+                    const retrievedDocs = vectorDBSearch(query);
+                    addTerminalMessage(serverTerminal, `Retrieved ${retrievedDocs.length} documents`, 'success');
+                    addTerminalMessage(kbTerminal, `Searching for: "${query}"`, 'command');
+                    addTerminalMessage(kbTerminal, `Found ${retrievedDocs.length} relevant documents`, 'success');
+                    visualizeStep('retrieval', `Retrieved documents: ${retrievedDocs.join(', ').substring(0, 50)}...`);
+                    
+                    // Simulate generation delay
+                    setTimeout(() => {
+                        const response = generateText(query, retrievedDocs[0]);
+                        addTerminalMessage(serverTerminal, `Generated response: "${response.substring(0, 50)}..."`, 'success');
+                        visualizeStep('generation', `Generated response: ${response.substring(0, 70)}...`);
+                        
+                        // Return to client
+                        setTimeout(() => {
+                            addTerminalMessage(clientTerminal, `Received response: "${response.substring(0, 50)}..."`, 'success');
+                            visualizeStep('response', response);
+                        }, 300);
+                    }, 800);
+                }, 500);
+            }, 300);
+        }
+
+        // Visualize each step in the RAG process
+        function visualizeStep(step, content) {
+            const stepDiv = document.createElement('div');
+            stepDiv.className = 'message mb-4 last:mb-0';
+            
+            switch(step) {
+                case 'query':
+                    stepDiv.innerHTML = `
+                        <div class="flex items-start">
+                            <div class="bg-blue-100 rounded-full w-8 h-8 flex items-center justify-center mr-3 mt-1">
+                                <i class="fas fa-user text-blue-600"></i>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-lg p-3 flex-1">
+                                <p class="text-gray-800">${content}</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'retrieval':
+                    stepDiv.innerHTML = `
+                        <div class="flex items-start">
+                            <div class="bg-green-100 rounded-full w-8 h-8 flex items-center justify-center mr-3 mt-1">
+                                <i class="fas fa-search text-green-600"></i>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-lg p-3 flex-1">
+                                <p class="text-gray-800">${content}</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'generation':
+                    stepDiv.innerHTML = `
+                        <div class="flex items-start">
+                            <div class="bg-yellow-100 rounded-full w-8 h-8 flex items-center justify-center mr-3 mt-1">
+                                <i class="fas fa-brain text-yellow-600"></i>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-lg p-3 flex-1">
+                                <p class="text-gray-800">${content}</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'response':
+                    stepDiv.innerHTML = `
+                        <div class="flex items-start">
+                            <div class="bg-purple-100 rounded-full w-8 h-8 flex items-center justify-center mr-3 mt-1">
+                                <i class="fas fa-robot text-purple-600"></i>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-lg p-3 flex-1">
+                                <p class="text-gray-800">${content}</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'error':
+                    stepDiv.innerHTML = `
+                        <div class="flex items-start">
+                            <div class="bg-red-100 rounded-full w-8 h-8 flex items-center justify-center mr-3 mt-1">
+                                <i class="fas fa-exclamation-triangle text-red-600"></i>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-lg p-3 flex-1">
+                                <p class="text-gray-800">${content}</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            processVisualization.appendChild(stepDiv);
+            processVisualization.scrollTop = processVisualization.scrollHeight;
+        }
+
+        // Handle Enter key in query input
+        userQuery.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendQuery();
+            }
+        });
+    </script>
+</body>
+</html>
