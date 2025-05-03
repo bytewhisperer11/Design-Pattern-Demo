@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factory Design Pattern Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .vehicle-card {
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        .vehicle-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .factory-animation {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .production-line {
+            position: relative;
+            height: 4px;
+            background: linear-gradient(90deg, #e0e0e0, #a0a0a0, #e0e0e0);
+        }
+        .production-line::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            animation: move 4s linear infinite;
+        }
+        @keyframes move {
+            0% { left: 0; transform: scale(0.8); }
+            50% { left: calc(100% - 20px); transform: scale(1.2); }
+            100% { left: 0; transform: scale(0.8); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-blue-800 mb-2">Factory Design Pattern</h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                A creational pattern that provides an interface for creating objects in a superclass,
+                but allows subclasses to alter the type of objects that will be created.
+            </p>
+        </header>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex flex-col md:flex-row gap-8">
+                <div class="md:w-1/2">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">How It Works</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="bg-blue-100 p-2 rounded-full mr-4">
+                                <i class="fas fa-industry text-blue-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-800">Factory Interface</h3>
+                                <p class="text-gray-600">Defines a method for creating objects, but leaves the actual implementation to subclasses.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-green-100 p-2 rounded-full mr-4">
+                                <i class="fas fa-cogs text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-800">Concrete Factories</h3>
+                                <p class="text-gray-600">Implement the factory method to produce specific types of objects.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-purple-100 p-2 rounded-full mr-4">
+                                <i class="fas fa-cube text-purple-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-medium text-gray-800">Products</h3>
+                                <p class="text-gray-600">Objects created by the factory, all following a common interface.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:w-1/2">
+                    <div class="bg-gray-100 rounded-lg p-4 h-full flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="factory-animation inline-block bg-blue-600 text-white p-4 rounded-full mb-4">
+                                <i class="fas fa-factory text-4xl"></i>
+                            </div>
+                            <div class="production-line w-full mb-4"></div>
+                            <div class="flex justify-around">
+                                <div class="bg-white p-3 rounded-lg shadow">
+                                    <i class="fas fa-car text-red-500 text-2xl"></i>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow">
+                                    <i class="fas fa-motorcycle text-blue-500 text-2xl"></i>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg shadow">
+                                    <i class="fas fa-truck text-green-500 text-2xl"></i>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 mt-4">The factory produces different vehicle types while keeping creation logic centralized.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Interactive Demo: Vehicle Factory</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="vehicle-card bg-white border border-gray-200 rounded-lg p-6 text-center cursor-pointer hover:border-blue-300" onclick="createVehicle('car')">
+                    <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-car text-blue-600 text-2xl"></i>
+                    </div>
+                    <h3 class="font-medium text-lg text-gray-800 mb-2">Car</h3>
+                    <p class="text-gray-600 text-sm">Standard passenger vehicle with 4 wheels</p>
+                    <button class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                        Manufacture Car
+                    </button>
+                </div>
+                <div class="vehicle-card bg-white border border-gray-200 rounded-lg p-6 text-center cursor-pointer hover:border-green-300" onclick="createVehicle('motorcycle')">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-motorcycle text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="font-medium text-lg text-gray-800 mb-2">Motorcycle</h3>
+                    <p class="text-gray-600 text-sm">Two-wheeled vehicle with high maneuverability</p>
+                    <button class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                        Manufacture Motorcycle
+                    </button>
+                </div>
+                <div class="vehicle-card bg-white border border-gray-200 rounded-lg p-6 text-center cursor-pointer hover:border-purple-300" onclick="createVehicle('truck')">
+                    <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-truck text-purple-600 text-2xl"></i>
+                    </div>
+                    <h3 class="font-medium text-lg text-gray-800 mb-2">Truck</h3>
+                    <p class="text-gray-600 text-sm">Heavy-duty vehicle for transporting goods</p>
+                    <button class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                        Manufacture Truck
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-gray-100 rounded-lg p-6">
+                <h3 class="font-medium text-lg text-gray-800 mb-4">Factory Output</h3>
+                <div id="output" class="min-h-40 bg-white rounded p-4">
+                    <p class="text-gray-500 italic">Select a vehicle type to manufacture...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Code Implementation</h2>
+            <div class="bg-gray-800 rounded-lg overflow-hidden">
+                <div class="flex items-center bg-gray-900 px-4 py-2">
+                    <div class="flex space-x-2">
+                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    </div>
+                    <span class="text-gray-400 ml-4 text-sm">JavaScript Implementation</span>
+                </div>
+                <pre class="p-4 text-gray-100 overflow-x-auto"><code>// Vehicle interface
+class Vehicle {
+    constructor(type) {
+        this.type = type;
+    }
+    
+    startEngine() {
+        return `${this.type} engine started`;
+    }
+    
+    describe() {
+        return `This is a ${this.type}`;
+    }
+}
+
+// Concrete vehicle classes
+class Car extends Vehicle {
+    constructor() {
+        super('Car');
+        this.wheels = 4;
+    }
+    
+    describe() {
+        return `${super.describe()} with ${this.wheels} wheels. Ideal for families.`;
+    }
+}
+
+class Motorcycle extends Vehicle {
+    constructor() {
+        super('Motorcycle');
+        this.wheels = 2;
+    }
+    
+    describe() {
+        return `${super.describe()} with ${this.wheels} wheels. Great for city commuting.`;
+    }
+}
+
+class Truck extends Vehicle {
+    constructor() {
+        super('Truck');
+        this.wheels = 6;
+    }
+    
+    describe() {
+        return `${super.describe()} with ${this.wheels} wheels. Built for heavy loads.`;
+    }
+}
+
+// Vehicle Factory
+class VehicleFactory {
+    createVehicle(type) {
+        switch(type.toLowerCase()) {
+            case 'car':
+                return new Car();
+            case 'motorcycle':
+                return new Motorcycle();
+            case 'truck':
+                return new Truck();
+            default:
+                throw new Error('Unknown vehicle type');
+        }
+    }
+}
+
+// Usage
+const factory = new VehicleFactory();
+const car = factory.createVehicle('car');
+console.log(car.describe());</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Vehicle {
+            constructor(type) {
+                this.type = type;
+            }
+            
+            startEngine() {
+                return `${this.type} engine started`;
+            }
+            
+            describe() {
+                return `This is a ${this.type}`;
+            }
+        }
+
+        class Car extends Vehicle {
+            constructor() {
+                super('Car');
+                this.wheels = 4;
+                this.icon = 'fas fa-car';
+                this.color = 'text-blue-500';
+            }
+            
+            describe() {
+                return `${super.describe()} with ${this.wheels} wheels. Ideal for families.`;
+            }
+        }
+
+        class Motorcycle extends Vehicle {
+            constructor() {
+                super('Motorcycle');
+                this.wheels = 2;
+                this.icon = 'fas fa-motorcycle';
+                this.color = 'text-green-500';
+            }
+            
+            describe() {
+                return `${super.describe()} with ${this.wheels} wheels. Great for city commuting.`;
+            }
+        }
+
+        class Truck extends Vehicle {
+            constructor() {
+                super('Truck');
+                this.wheels = 6;
+                this.icon = 'fas fa-truck';
+                this.color = 'text-purple-500';
+            }
+            
+            describe() {
+                return `${super.describe()} with ${this.wheels} wheels. Built for heavy loads.`;
+            }
+        }
+
+        class VehicleFactory {
+            createVehicle(type) {
+                switch(type.toLowerCase()) {
+                    case 'car':
+                        return new Car();
+                    case 'motorcycle':
+                        return new Motorcycle();
+                    case 'truck':
+                        return new Truck();
+                    default:
+                        throw new Error('Unknown vehicle type');
+                }
+            }
+        }
+
+        const factory = new VehicleFactory();
+        const output = document.getElementById('output');
+
+        function createVehicle(type) {
+            const vehicle = factory.createVehicle(type);
+            
+            // Animation effect
+            output.innerHTML = `
+                <div class="flex items-center justify-center h-40">
+                    <div class="animate-pulse">
+                        <i class="fas fa-cog fa-spin text-3xl text-gray-400"></i>
+                    </div>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                output.innerHTML = `
+                    <div class="flex items-start">
+                        <div class="mr-4 text-4xl ${vehicle.color}">
+                            <i class="${vehicle.icon}"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-lg">${vehicle.type} Manufactured</h4>
+                            <p class="text-gray-600">${vehicle.describe()}</p>
+                            <div class="mt-2 text-sm bg-blue-50 text-blue-800 inline-block px-3 py-1 rounded">
+                                <i class="fas fa-bolt mr-1"></i> ${vehicle.startEngine()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
